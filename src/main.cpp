@@ -310,7 +310,7 @@ void setup() {
     ESP_LOGI(TAG, "Starting IBIS Feed...");
     xTaskCreatePinnedToCore(ibis_loop,  // task function
                             "ibisloop", // name of task
-                            1024,      // stack size of task
+                            2048,      // stack size of task
                             (void *)1, // parameter of the task
                             1,         // priority of the task
                             &IbisTask,  // task handle
