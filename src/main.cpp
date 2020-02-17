@@ -303,6 +303,20 @@ void setup() {
   }
 #endif
 
+
+#if (HAS_IBIS)
+  strcat_P(features, " IBIS");
+  if (ibis_init()) {
+    ESP_LOGI(TAG, "Starting IBIS Feed...");
+    xTaskCreatePinnedToCore(ibis_loop,  // task function
+                            "ibisloop", // name of task
+                            1024,      // stack size of task
+                            (void *)1, // parameter of the task
+                            1,         // priority of the task
+                            &IbisTask,  // task handle
+                            1);        // CPU core
+  }
+#endif
 // initialize sensors
 #if (HAS_SENSORS)
   strcat_P(features, " SENS");

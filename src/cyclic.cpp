@@ -45,6 +45,10 @@ void doHousekeeping() {
   ESP_LOGD(TAG, "Gpsloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(GpsTask), eTaskGetState(GpsTask));
 #endif
+#if (HAS_IBIS)
+  ESP_LOGD(TAG, "Ibisloop %d bytes left | Taskstate = %d",
+           uxTaskGetStackHighWaterMark(IbisTask), eTaskGetState(IbisTask));
+#endif
 #ifdef HAS_SPI
   ESP_LOGD(TAG, "spiloop %d bytes left | Taskstate = %d",
            uxTaskGetStackHighWaterMark(spiTask), eTaskGetState(spiTask));

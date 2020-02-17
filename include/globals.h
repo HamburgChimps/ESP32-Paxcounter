@@ -140,6 +140,10 @@ extern RTC_DATA_ATTR runmode_t RTC_runmode;
 #include "gpsread.h"
 #endif
 
+#if (HAS_IBIS)
+#include "ibisread.h"
+#endif
+
 #if (HAS_LORA)
 #include "lorawan.h"
 #endif
