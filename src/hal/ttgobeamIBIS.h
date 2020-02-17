@@ -42,6 +42,9 @@ Reset -> reset device
 
 // IBIS settings
 #define HAS_IBIS 1 // use on board IBIS
+#define IBIS_SERIAL 1200, SERIAL_7E2, GPIO_NUM_4, GPIO_NUM_15
+
+
 // enable only if device has these sensors, otherwise comment these lines
 // BME680 sensor on I2C bus
 //#define HAS_BME 1 // Enable BME sensors in general

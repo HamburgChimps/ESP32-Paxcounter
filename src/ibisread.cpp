@@ -6,10 +6,13 @@
 static const char TAG[] = __FILE__;
 
 TaskHandle_t IbisTask;
+HardwareSerial ibisSerial(2); // use UART #2
+
 
 int ibis_init(void) {
   int ret = 1;
   ESP_LOGI(TAG, "Using serial IBIS");
+  ibisSerial.begin(IBIS_SERIAL);
   return ret;
 }
 
