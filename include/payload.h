@@ -51,6 +51,7 @@ public:
   void addAlarm(int8_t rssi, uint8_t message);
   void addVoltage(uint16_t value);
   void addGPS(gpsStatus_t value);
+  void addIBIS(ibisStatus_t value);
   void addBME(bmeStatus_t value);
   void addButton(uint8_t value);
   void addSensor(uint8_t[]);

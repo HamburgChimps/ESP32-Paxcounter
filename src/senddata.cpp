@@ -67,6 +67,10 @@ void sendData() {
   gpsStatus_t gps_status;
   #endif
 
+  #if (HAS_IBIS)
+  ibisStatus_t ibis_status = {0};
+  #endif
+
   while (bitmask) {
     switch (bitmask & mask) {
 
@@ -143,10 +147,15 @@ void sendData() {
       payload.addSensor(sensor_read(2));
       SendPayload(SENSOR2PORT, prio_normal);
       break;
-    case SENSOR3_DATA:
+#endif
+
+#if (HAS_IBIS)
+    case IBIS_DATA:
       payload.reset();
-      payload.addSensor(sensor_read(3));
-      SendPayload(SENSOR3PORT, prio_normal);
+      ibis_storeStatus(&ibis_status);
+      payload.addIBIS(ibis_status);
+      SendPayload(IBISPORT, prio_normal);
+      ESP_LOGD(TAG, "Sending IBIS DATA");
       break;
 #endif
 

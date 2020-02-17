@@ -177,7 +177,7 @@ void PayloadConvert::addConfig(configData_t value) {
               value.payloadmask && COUNT_DATA ? true : false,
               value.payloadmask && SENSOR1_DATA ? true : false,
               value.payloadmask && SENSOR2_DATA ? true : false,
-              value.payloadmask && SENSOR3_DATA ? true : false,
+              value.payloadmask && IBIS_DATA ? true : false,
               value.payloadmask && BATT_DATA ? true : false);
   writeVersion(value.version);
 }
@@ -200,6 +200,15 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
   writeUint16(value.hdop);
   writeUint16(value.altitude);
 #endif
+#endif
+}
+
+void PayloadConvert::addIBIS(ibisStatus_t value) {
+#if HAS_IBIS
+  writeUint16(value.DS001);
+  writeUint16(value.DS003);
+  buffer[cursor++] = highByte(value.DS010E);
+  buffer[cursor++] = lowByte(value.DS010E);
 #endif
 }
 

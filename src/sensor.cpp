@@ -22,7 +22,7 @@ uint8_t sensor_mask(uint8_t sensor_no) {
   case 2:
     return (uint8_t)SENSOR2_DATA;
   case 3:
-    return (uint8_t)SENSOR3_DATA;
+    return (uint8_t)IBIS_DATA;
   case 4:
     return (uint8_t)BATT_DATA;
   case 5:

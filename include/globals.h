@@ -28,7 +28,7 @@
 #define COUNT_DATA (0x08)
 #define SENSOR1_DATA (0x10)
 #define SENSOR2_DATA (0x20)
-#define SENSOR3_DATA (0x40)
+#define IBIS_DATA (0x40)
 #define BATT_DATA (0x80)
 
 // bits in configmask for device runmode control
@@ -99,6 +99,13 @@ typedef struct {
   uint16_t hdop;
   int16_t altitude;
 } gpsStatus_t;
+
+
+typedef struct {
+  uint16_t DS001;
+  uint16_t DS003;
+  int16_t DS010E;
+} ibisStatus_t;
 
 typedef struct {
   float iaq;             // IAQ signal

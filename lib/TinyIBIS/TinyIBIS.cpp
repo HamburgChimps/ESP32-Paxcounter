@@ -39,18 +39,21 @@ namespace TinyIBIS {
         ds001.updatedAt = now();
         ds001.valid = true,
         ds001.value = std::stoi(m.get<1>().to_string());
+        ESP_LOGD(TAG, "Bus Line Number %s", m.get<1>().to_string().c_str());
     };
 
     void ParseDS003(ctre::regex_results<const char *, ctre::captured_content<1U>> m, DS003 &ds003) noexcept {
         ds003.updatedAt = now();
         ds003.valid = true,
         ds003.value = std::stoi(m.get<1>().to_string());
+        ESP_LOGD(TAG, "Next Stop %s", m.get<1>().str().c_str());
     };
 
     void ParseDS010E(ctre::regex_results<const char *, ctre::captured_content<1U>> m, DS010E &ds010E) noexcept {
         ds010E.updatedAt = now();
         ds010E.valid = true,
         ds010E.value = std::stoi(m.get<1>().to_string());
+        ESP_LOGD(TAG, "Current Delay %s", m.get<1>().str().c_str());
     };
 
 
