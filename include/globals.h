@@ -104,6 +104,7 @@ typedef struct {
 typedef struct {
   uint16_t DS001;
   uint16_t DS003;
+  uint16_t DS036;
   int16_t DS010E;
 } ibisStatus_t;
 

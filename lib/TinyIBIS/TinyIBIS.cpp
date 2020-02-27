@@ -3,8 +3,9 @@
 namespace TinyIBIS {
     static const char TAG[] = __FILE__;
 
-    static constexpr ctll::fixed_string DS001_re = ctll::fixed_string{"l([0-9]{3})"};
-    static constexpr ctll::fixed_string DS003_re = ctll::fixed_string{"^hP([0-9]{4})$"};
+    static constexpr ctll::fixed_string DS001_re = ctll::fixed_string{"^l([0-9]{3})$"};
+    static constexpr ctll::fixed_string DS003_re = ctll::fixed_string{"^z([0-9]{3})$"};
+    static constexpr ctll::fixed_string DS036_re = ctll::fixed_string{"^hP([0-9]{4})$"};
     static constexpr ctll::fixed_string DS010E_re = ctll::fixed_string{"^xV(/-|/+[0-9]{3})$"};
 
     std::optional<tMatch> MatchDS001(std::string_view sv) noexcept {
@@ -16,7 +17,14 @@ namespace TinyIBIS {
 
     std::optional<tMatch> MatchDS003(std::string_view sv) noexcept {
         if (auto m = ctre::match<DS003_re>(sv)) {
-            return tMatch{t_telegram::DS003, m};
+            return tMatch{t_telegram::DS003, m}; 
+        };
+        return std::nullopt;
+    };
+
+    std::optional<tMatch> MatchDS036(std::string_view sv) noexcept {
+        if (auto m = ctre::match<DS036_re>(sv)) {
+            return tMatch{t_telegram::DS036, m};
         }
         return std::nullopt;
     };
@@ -29,55 +37,17 @@ namespace TinyIBIS {
     };
 
 
-    static const t_fmatch MatchFns[3] = {
+    static const t_fmatch MatchFns[4] = {
         &MatchDS001,
         &MatchDS003,
+        &MatchDS036,
         &MatchDS010E
     };
-
-    void ParseDS001(ctre::regex_results<const char *, ctre::captured_content<1U>> m, DS001 &ds001) noexcept {
-        ds001.updatedAt = now();
-        ds001.valid = true,
-        ds001.value = std::stoi(m.get<1>().to_string());
-        ESP_LOGD(TAG, "Bus Line Number %s", m.get<1>().to_string().c_str());
-    };
-
-    void ParseDS003(ctre::regex_results<const char *, ctre::captured_content<1U>> m, DS003 &ds003) noexcept {
-        ds003.updatedAt = now();
-        ds003.valid = true,
-        ds003.value = std::stoi(m.get<1>().to_string());
-        ESP_LOGD(TAG, "Next Stop %s", m.get<1>().str().c_str());
-    };
-
-    void ParseDS010E(ctre::regex_results<const char *, ctre::captured_content<1U>> m, DS010E &ds010E) noexcept {
-        ds010E.updatedAt = now();
-        ds010E.valid = true,
-        ds010E.value = std::stoi(m.get<1>().to_string());
-        ESP_LOGD(TAG, "Current Delay %s", m.get<1>().str().c_str());
-    };
-
-
 
     Ibis::Ibis(/* args */)
         : parity(0), isParity(false), curTermOffset(0) {
         parity = PARITY_SEED;
         buffer[0] = 0;
-        this->ds001 = {
-            now(), // updatedAt
-            false, // valid
-            0      // value
-        };
-        this->ds003 = {
-            now(), // updatedAt
-            false, // valid
-            0      // value
-        };
-
-        this->ds010e = {
-            now(), // updatedAt
-            false, // valid
-            0      // value
-        };
     };
 
     t_telegram Ibis::encode(char c) {
@@ -89,19 +59,22 @@ namespace TinyIBIS {
 
         if (isParity) { // A parity byte follows a terminator
             if (parity == (uint8_t)c) {
-                ESP_LOGV(TAG,"\nGet telegram type for: %s\n", buffer);
+                ESP_LOGV(TAG,"Get telegram type for: %s\n", buffer);
                 const std::string_view sv = std::string_view{buffer};
                 auto tt = GetTelegramType(sv);
                 if (tt) {
                     switch (tt.value().type) {
                         case TinyIBIS::t_telegram::DS001:
-                            ParseDS001(tt.value().m, this->ds001);
+                            this->ParseDS001(tt.value().m);
                             break;
                         case TinyIBIS::t_telegram::DS003:
-                            ParseDS003(tt.value().m, this->ds003);
+                            this->ParseDS003(tt.value().m);
+                            break;
+                        case TinyIBIS::t_telegram::DS036:
+                            this->ParseDS036(tt.value().m);
                             break;
                         case TinyIBIS::t_telegram::DS010E:
-                            ParseDS010E(tt.value().m, this->ds010e);
+                            this->ParseDS010E(tt.value().m);
                             break;
                         default:
                             break;
@@ -133,6 +106,38 @@ namespace TinyIBIS {
         isStart = false;
         memset(buffer, '\0', IBIS_MAX_FIELD_SIZE);
     }
+
+    void Ibis::ParseDS001(t_sResult m) noexcept {
+        const auto s = m.get<1>().to_string();
+        this->DS001.value = std::stoi(s);
+        this->DS001.updatedAt = now();
+        this->DS001.valid = true;
+        ESP_LOGD(TAG, "Bus Line Number %s", s.c_str());
+    };
+
+    void Ibis::ParseDS003(t_sResult m) noexcept {
+        const auto s = m.get<1>().to_string();
+        this->DS003.value = std::stoi(s);
+        this->DS003.updatedAt = now();
+        this->DS003.valid = true;
+        ESP_LOGD(TAG, "Destination Number %s", s.c_str());
+    };
+
+    void Ibis::ParseDS036(t_sResult m) noexcept {
+        const auto s = m.get<1>().to_string();
+        this->DS036.value = std::stoi(s);
+        this->DS036.updatedAt = now();
+        this->DS036.valid = true;
+        ESP_LOGD(TAG, "Next Stop %s", s.c_str());
+    };
+
+    void Ibis::ParseDS010E(t_sResult m) noexcept {
+        const auto s = m.get<1>().to_string();
+        this->DS010E.value = std::stoi(s);
+        this->DS010E.updatedAt = now();
+        this->DS010E.valid = true;
+        ESP_LOGD(TAG, "Current Delay %s", s.c_str());
+    };
 
     std::optional<tMatch> GetTelegramType(std::string_view sv) {
         const size_t se = sizeof(MatchFns) / sizeof(MatchFns[0]);

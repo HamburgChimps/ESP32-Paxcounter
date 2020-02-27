@@ -151,11 +151,15 @@ void sendData() {
 
 #if (HAS_IBIS)
     case IBIS_DATA:
-      payload.reset();
-      ibis_storeStatus(&ibis_status);
-      payload.addIBIS(ibis_status);
-      SendPayload(IBISPORT, prio_normal);
-      ESP_LOGD(TAG, "Sending IBIS DATA");
+      if (ibis_isValid()) {
+        payload.reset();
+        ibis_storeStatus(&ibis_status);
+        payload.addIBIS(ibis_status);
+        SendPayload(IBISPORT, prio_normal);
+        ESP_LOGD(TAG, "Sending IBIS DATA");
+      } else {
+        ESP_LOGD(TAG, "No Valid IBIS DATA");
+      }
       break;
 #endif
 

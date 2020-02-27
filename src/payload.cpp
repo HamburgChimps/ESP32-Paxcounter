@@ -99,6 +99,15 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 #endif
 }
 
+void PayloadConvert::addIBIS(ibisStatus_t value) {
+#if HAS_IBIS
+  writeUint16(value.DS001);
+  writeUint16(value.DS003);
+  buffer[cursor++] = highByte(value.DS010E);
+  buffer[cursor++] = lowByte(value.DS010E);
+#endif
+}
+
 void PayloadConvert::addSensor(uint8_t buf[]) {
 #if(HAS_SENSORS)
   uint8_t length = buf[0];
@@ -207,6 +216,7 @@ void PayloadConvert::addIBIS(ibisStatus_t value) {
 #if HAS_IBIS
   writeUint16(value.DS001);
   writeUint16(value.DS003);
+  writeUint16(value.DS036);
   buffer[cursor++] = highByte(value.DS010E);
   buffer[cursor++] = lowByte(value.DS010E);
 #endif
