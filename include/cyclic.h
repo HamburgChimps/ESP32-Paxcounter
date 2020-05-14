@@ -5,18 +5,10 @@
 #include "senddata.h"
 #include "rcommand.h"
 #include "spislave.h"
-
-#if(HAS_LORA)
-#include <lmic.h>
-#endif
-
-#if (HAS_BME)
 #include "bmesensor.h"
-#endif
-
-#ifdef HAS_DISPLAY
 #include "display.h"
-#endif
+#include "sds011read.h"
+#include "sdcard.h"
 
 extern Ticker housekeeper;
 

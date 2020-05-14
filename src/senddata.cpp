@@ -63,9 +63,12 @@ void sendData() {
 
   uint8_t bitmask = cfg.payloadmask;
   uint8_t mask = 1;
-  #if (HAS_GPS) 
+#if (HAS_GPS)
   gpsStatus_t gps_status;
-  #endif
+#endif
+#if (HAS_SDS011)
+  sdsStatus_t sds_status;
+#endif
 
   #if (HAS_IBIS)
   ibisStatus_t ibis_status = {0};
@@ -99,6 +102,10 @@ void sendData() {
       if (cfg.blescan)
         payload.addCount(macs_ble, MAC_SNIFF_BLE);
 #endif
+#if (HAS_SDS011)
+      sds011_store(&sds_status);
+      payload.addSDS(sds_status);
+#endif
       SendPayload(COUNTERPORT, prio_normal);
       // clear counter if not in cumulative counter mode
       if (cfg.countermode != 1) {
@@ -108,7 +115,7 @@ void sendData() {
       }
 #ifdef HAS_DISPLAY
       else
-        oledPlotCurve(macs.size(), true);
+        dp_plotCurve(macs.size(), true);
 #endif
       break;
 #endif

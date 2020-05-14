@@ -136,14 +136,21 @@ void RevBytes(unsigned char *b, size_t c) {
 }
 
 // LMIC callback functions
-void os_getDevKey(u1_t *buf) { memcpy(buf, APPKEY, 16); }
+void os_getDevKey(u1_t *buf) {
+#ifndef LORA_ABP
+  memcpy(buf, APPKEY, 16);
+#endif
+}
 
 void os_getArtEui(u1_t *buf) {
+#ifndef LORA_ABP
   memcpy(buf, APPEUI, 8);
   RevBytes(buf, 8); // TTN requires it in LSB First order, so we swap bytes
+#endif
 }
 
 void os_getDevEui(u1_t *buf) {
+#ifndef LORA_ABP
   int i = 0, k = 0;
   memcpy(buf, DEVEUI, 8); // get fixed DEVEUI from loraconf.h
   for (i = 0; i < 8; i++) {
@@ -159,6 +166,7 @@ void os_getDevEui(u1_t *buf) {
 #ifdef MCP_24AA02E64_I2C_ADDRESS
   get_hard_deveui(buf);
   RevBytes(buf, 8); // swap bytes to LSB format
+#endif
 #endif
 }
 
@@ -251,7 +259,7 @@ void lora_send(void *pvParameters) {
         // if last packet sent was a timesync request, store TX timestamp
         if (SendBuffer.MessagePort == TIMEPORT)
           // store LMIC time when we started transmit of timesync request
-          timesync_storeReq(osticks2ms(os_getTime()), timesync_tx);
+          timesync_store(osticks2ms(os_getTime()), timesync_tx);
 #endif
 
         ESP_LOGI(TAG, "%d byte(s) sent to LORA", SendBuffer.MessageSize);
@@ -278,6 +286,10 @@ void lora_send(void *pvParameters) {
   }
 }
 
+void lora_stack_reset() {
+  LMIC_reset(); // reset LMIC MAC
+}
+
 esp_err_t lora_stack_init(bool do_join) {
   assert(SEND_QUEUE_SIZE);
   LoraSendQueue = xQueueCreate(SEND_QUEUE_SIZE, sizeof(MessageBuffer_t));
@@ -298,6 +310,17 @@ esp_err_t lora_stack_init(bool do_join) {
                           &lmicTask,  // task handle
                           1);         // CPU core
 
+#ifdef LORA_ABP
+  // Pass ABP parameters to LMIC_setSession
+  lora_stack_reset();
+  uint8_t appskey[sizeof(APPSKEY)];
+  uint8_t nwkskey[sizeof(NWKSKEY)];
+  memcpy_P(appskey, APPSKEY, sizeof(APPSKEY));
+  memcpy_P(nwkskey, NWKSKEY, sizeof(NWKSKEY));
+  LMIC_setSession(NETID, DEVADDR, nwkskey, appskey);
+  // These parameters are defined as macro in loraconf.h
+  setABPParamaters();
+#else
   // Start join procedure if not already joined,
   // lora_setupForNetwork(true) is called by eventhandler when joined
   // else continue current session
@@ -305,12 +328,12 @@ esp_err_t lora_stack_init(bool do_join) {
     if (!LMIC_startJoining())
       ESP_LOGI(TAG, "Already joined");
   } else {
-    LMIC_reset();
+    lora_stack_reset();
     LMIC_setSession(RTCnetid, RTCdevaddr, RTCnwkKey, RTCartKey);
     LMIC.seqnoUp = RTCseqnoUp;
     LMIC.seqnoDn = RTCseqnoDn;
   }
-
+#endif
   // start lmic send task
   xTaskCreatePinnedToCore(lora_send,      // task function
                           "lorasendtask", // name of task
@@ -368,10 +391,12 @@ void lmictask(void *pvParameters) {
   // LMIC_reset() doesn't affect callbacks, so we can do this first.
   LMIC_registerRxMessageCb(myRxCallback, NULL);
   LMIC_registerEventCb(myEventCallback, NULL);
+  // to come with future LMIC version
+  // LMIC_registerBattLevelCb(myBattLevelCb, NULL);
 
   // Reset the MAC state. Session and pending data transfers will be
   // discarded.
-  LMIC_reset();
+  lora_stack_reset();
 
 // This tells LMIC to make the receive windows bigger, in case your clock is
 // faster or slower. This causes the transceiver to be earlier switched on,
@@ -423,6 +448,12 @@ void myEventCallback(void *pUserData, ev_t ev) {
     lora_setupForNetwork(false);
     break;
 
+  case EV_JOIN_FAILED:
+    // must call LMIC_reset() to stop joining
+    // otherwise join procedure continues.
+    lora_stack_reset();
+    break;
+
   case EV_JOIN_TXCOMPLETE:
     // replace descriptor from library with more descriptive term
     snprintf(lmic_event_msg, LMIC_EVENTMSG_LEN, "%-16s", "JOIN_WAIT");
@@ -438,6 +469,35 @@ void myEventCallback(void *pUserData, ev_t ev) {
 
   // print event
   ESP_LOGD(TAG, "%s", lmic_event_msg);
+}
+
+uint8_t myBattLevelCb(void *pUserData) {
+
+  // set the battery value to send by LMIC in MAC Command
+  // DevStatusAns. Available defines in lorabase.h:
+  //   MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
+  //   MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
+  //   MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
+  //   MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
+  // we calculate the applicable value from MCMD_DEVS_BATT_MIN to
+  // MCMD_DEVS_BATT_MAX from bat_percent value
+
+  uint8_t const batt_percent = read_battlevel();
+
+  if (batt_percent == 0)
+    return MCMD_DEVS_BATT_NOINFO;
+  else
+
+#ifdef HAS_PMU
+      if (pmu.isVBUSPlug())
+    return MCMD_DEVS_EXT_POWER;
+#elif defined HAS_IP5306
+      if (IP5306_GetPowerSource())
+    return MCMD_DEVS_EXT_POWER;
+#else
+    return (batt_percent / 100.0 *
+            (MCMD_DEVS_BATT_MAX - MCMD_DEVS_BATT_MIN + 1));
+#endif // HAS_PMU
 }
 
 // event EV_RXCOMPLETE message handler
@@ -518,32 +578,6 @@ const char *getCrName(rps_t rps) {
   const char *const t[] = {"CR 4/5", "CR 4/6", "CR 4/7", "CR 4/8"};
   return t[getCr(rps)];
 }
-
-/*
-u1_t os_getBattLevel() {
-
-  //return values:
-  //MCMD_DEVS_EXT_POWER   = 0x00, // external power supply
-  //MCMD_DEVS_BATT_MIN    = 0x01, // min battery value
-  //MCMD_DEVS_BATT_MAX    = 0xFE, // max battery value
-  //MCMD_DEVS_BATT_NOINFO = 0xFF, // unknown battery level
-
-#if (defined HAS_PMU || defined BAT_MEASURE_ADC)
-  uint16_t voltage = read_voltage();
-
-  switch (voltage) {
-  case 0:
-    return MCMD_DEVS_BATT_NOINFO;
-  case 0xffff:
-    return MCMD_DEVS_EXT_POWER;
-  default:
-    return (voltage > OTA_MIN_BATT ? MCMD_DEVS_BATT_MAX : MCMD_DEVS_BATT_MIN);
-  }
-#else // we don't have any info on battery level
-  return MCMD_DEVS_BATT_NOINFO;
-#endif
-} // getBattLevel()
-*/
 
 #if (VERBOSE)
 // decode LORAWAN MAC message

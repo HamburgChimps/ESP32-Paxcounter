@@ -8,8 +8,17 @@
 #define BME_PRIMARY_ADDRESS (0x77)
 #define BME_SECONDARY_ADDRESS (0x76)
 #define AXP192_PRIMARY_ADDRESS (0x34)
+#define IP5306_PRIMARY_ADDRESS (0x75)
 #define MCP_24AA02E64_PRIMARY_ADDRESS (0x50)
 #define QUECTEL_GPS_PRIMARY_ADDRESS (0x10)
+
+#ifndef MY_DISPLAY_SDA
+#define MY_DISPLAY_SDA SDA
+#endif
+
+#ifndef MY_DISPLAY_SCL
+#define MY_DISPLAY_SCL SCL
+#endif
 
 void i2c_init(void);
 void i2c_deinit(void);

@@ -48,8 +48,14 @@
 //#define HAS_BMP180
 //#define BMP180_ADDR 0x77
 
+// SDS011 dust sensor settings
+#define HAS_SDS011 1 // use SDS011
+// used pins on the ESP-side:
+#define SDS_TX 19     // connect to RX on the SDS011
+#define SDS_RX 23     // connect to TX on the SDS011
+
 // user defined sensors
-//#define HAS_SENSORS 1 // comment out if device has user defined sensors
+#define HAS_SENSORS 1 // comment out if device has user defined sensors
 
 #define CFG_sx1276_radio 1 // select LoRa chip
 //#define CFG_sx1272_radio 1 // select LoRa chip
@@ -57,7 +63,7 @@
 #define DISABLE_BROWNOUT 1 // comment out if you want to keep brownout feature
 
 #define HAS_DISPLAY 1
-//#define DISPLAY_FLIP  1 // use if display is rotated
+//#define MY_DISPLAY_FLIP  1 // use if display is rotated
 #define BAT_MEASURE_ADC ADC1_GPIO35_CHANNEL // battery probe GPIO pin -> ADC1_CHANNEL_7
 #define BAT_VOLTAGE_DIVIDER 2 // voltage divider 100k/100k on board
 
@@ -71,12 +77,12 @@
 #define GPS_INT GPIO_NUM_13 // 30ns accurary timepulse, to be external wired on pcb: NEO 6M Pin#3 -> GPIO13
 
 // Pins for I2C interface of OLED Display
-#define MY_OLED_SDA (4)
-#define MY_OLED_SCL (15)
-#define MY_OLED_RST (16)
+#define MY_DISPLAY_SDA (4)
+#define MY_DISPLAY_SCL (15)
+#define MY_DISPLAY_RST (16)
 
 // Settings for on board DS3231 RTC chip
-#define HAS_RTC MY_OLED_SDA, MY_OLED_SCL // SDA, SCL
+#define HAS_RTC MY_DISPLAY_SDA, MY_DISPLAY_SCL // SDA, SCL
 #define RTC_INT GPIO_NUM_34 // timepulse with accuracy +/- 2*e-6 [microseconds] = 0,1728sec / day
 
 // Settings for IF482 interface

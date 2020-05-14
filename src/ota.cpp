@@ -45,23 +45,20 @@ void start_ota_update() {
 // init display
 #ifdef HAS_DISPLAY
 
-#ifndef DISPLAY_FLIP
-  oledInit(OLED_128x64, false, false, -1, -1, MY_OLED_RST, 400000L);
-#else
-  oledInit(OLED_128x64, true, false, -1, -1, MY_OLED_RST, 400000L);
-#endif
+  dp_setup();
 
-  // set display buffer
-  oledSetBackBuffer(displaybuf);
-
-  oledFill(0, 1);
-  dp_printf(0, 0, 0, 1, "SOFTWARE UPDATE");
-  dp_printf(0, 1, 0, 0, "WiFi connect  ..");
-  dp_printf(0, 2, 0, 0, "Has Update?   ..");
-  dp_printf(0, 3, 0, 0, "Fetching      ..");
-  dp_printf(0, 4, 0, 0, "Downloading   ..");
-  dp_printf(0, 5, 0, 0, "Rebooting     ..");
-  oledDumpBuffer(displaybuf);
+  dp_printf("SOFTWARE UPDATE");
+  dp_println();
+  dp_printf("WiFi connect  ..");
+  dp_println();
+  dp_printf("Has Update?   ..");
+  dp_println();
+  dp_printf("Fetching      ..");
+  dp_println();
+  dp_printf("Downloading   ..");
+  dp_println();
+  dp_printf("Rebooting     ..");
+  dp_dump(displaybuf);
 #endif
 
   ESP_LOGI(TAG, "Starting Wifi OTA update");
@@ -309,12 +306,15 @@ retry:
 void ota_display(const uint8_t row, const std::string status,
                  const std::string msg) {
 #ifdef HAS_DISPLAY
-  dp_printf(112, row, 0, 0, status.substr(0, 2).c_str());
+  dp_setFont(MY_FONT_SMALL);
+  dp_setTextCursor(14, row);
+  dp_printf(status.substr(0, 2).c_str());
   if (!msg.empty()) {
-    dp_printf(0, 7, 0, 0, "                ");
-    dp_printf(0, 7, 0, 0, msg.substr(0, 16).c_str());
+    dp_printf("                ");
+    dp_printf(msg.substr(0, 16).c_str());
+    dp_println();
   }
-  oledDumpBuffer(displaybuf);
+  dp_dump(displaybuf);
 #endif
 }
 

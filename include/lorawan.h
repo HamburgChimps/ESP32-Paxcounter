@@ -20,6 +20,7 @@
 
 extern TaskHandle_t lmicTask, lorasendTask;
 
+void lora_stack_reset();
 esp_err_t lora_stack_init(bool do_join);
 void lora_setupForNetwork(bool preJoin);
 void lmictask(void *pvParameters);
@@ -32,6 +33,7 @@ void os_getDevEui(u1_t *buf);
 void lora_send(void *pvParameters);
 void lora_enqueuedata(MessageBuffer_t *message);
 void lora_queuereset(void);
+uint8_t myBattLevelCb(void *pUserData);
 void IRAM_ATTR myEventCallback(void *pUserData, ev_t ev);
 void IRAM_ATTR myRxCallback(void *pUserData, uint8_t port, const uint8_t *pMsg,
                             size_t nMsg);
@@ -39,7 +41,6 @@ void IRAM_ATTR myTxCallback(void *pUserData, int fSuccess);
 const char *getSfName(rps_t rps);
 const char *getBwName(rps_t rps);
 const char *getCrName(rps_t rps);
-// u1_t os_getBattLevel(void);
 
 #if (VERBOSE)
 

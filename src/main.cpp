@@ -79,8 +79,9 @@ triggers pps 1 sec impulse
 configData_t cfg; // struct holds current device configuration
 char lmic_event_msg[LMIC_EVENTMSG_LEN]; // display buffer for LMIC event message
 uint8_t volatile channel = 0;           // channel rotation counter
-uint16_t volatile macs_total = 0, macs_wifi = 0, macs_ble = 0,
-                  batt_voltage = 0; // globals for display
+uint8_t batt_level = 0;                 // display value
+uint16_t volatile macs_total = 0, macs_wifi = 0,
+                  macs_ble = 0; // globals for display
 
 hw_timer_t *ppsIRQ = NULL, *displayIRQ = NULL, *matrixDisplayIRQ = NULL;
 
@@ -197,7 +198,7 @@ void setup() {
   strcat_P(features, " OLED");
   DisplayIsOn = cfg.screenon;
   // display verbose info only after a coldstart (note: blocking call!)
-  init_display(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
+  dp_init(RTC_runmode == RUNMODE_POWERCYCLE ? true : false);
 #endif
 
   // scan i2c bus for devices
@@ -232,7 +233,6 @@ void setup() {
 #ifdef HAS_RGB_LED
   switch_LED(LED_ON);
   strcat_P(features, " RGB");
-  rgb_set_color(COLOR_PINK);
 #endif
 
 #endif // HAS_LED
@@ -257,10 +257,13 @@ void setup() {
 #endif
 
 // initialize battery status
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
   strcat_P(features, " BATT");
   calibrate_voltage();
-  batt_voltage = read_voltage();
+  batt_level = read_battlevel();
+#ifdef HAS_IP5306
+  printIP5306Stats();
+#endif
 #endif
 
 #if (USE_OTA)
@@ -337,8 +340,14 @@ void setup() {
 #endif
 
 #ifdef HAS_SDCARD
-  if (sdcardInit())
+  if (sdcard_init())
     strcat_P(features, " SD");
+#endif
+
+#if (HAS_SDS011)
+  ESP_LOGI(TAG, "init fine-dust-sensor");
+  if (sds011_init())
+    strcat_P(features, " SDS");
 #endif
 
 #if (VENDORFILTER)
@@ -463,7 +472,7 @@ void setup() {
 
 // initialize gps time
 #if (HAS_GPS)
-  fetch_gpsTime();
+  get_gpstime();
 #endif
 
 #if (defined HAS_IF482 || defined HAS_DCF77)

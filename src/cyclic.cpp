@@ -9,6 +9,10 @@ static const char TAG[] = __FILE__;
 
 Ticker housekeeper;
 
+#if (HAS_SDS011)
+extern boolean isSDS011Active;
+#endif
+
 void housekeeping() {
   xTaskNotifyFromISR(irqHandlerTask, CYCLIC_IRQ, eSetBits, NULL);
 }
@@ -18,14 +22,13 @@ void doHousekeeping() {
 
   // update uptime counter
   uptime();
-
   // check if update mode trigger switch was set
   if (RTC_runmode == RUNMODE_UPDATE) {
     // check battery status if we can before doing ota
     if (batt_sufficient()) {
       do_reset(true); // warmstart to runmode update
     } else {
-      ESP_LOGE(TAG, "Battery voltage %dmV too low for OTA", batt_voltage);
+      ESP_LOGE(TAG, "Battery level %d%% is too low for OTA", batt_level);
       RTC_runmode = RUNMODE_NORMAL; // keep running in normal mode
     }
   }
@@ -66,14 +69,13 @@ void doHousekeeping() {
 #endif
 
 // read battery voltage into global variable
-#if (defined BAT_MEASURE_ADC || defined HAS_PMU)
-  batt_voltage = read_voltage();
-  if (batt_voltage == 0xffff)
-    ESP_LOGI(TAG, "Battery: external power");
-  else
-    ESP_LOGI(TAG, "Battery: %dmV", batt_voltage);
+#if (defined BAT_MEASURE_ADC || defined HAS_PMU || defined HAS_IP5306)
+  batt_level = read_battlevel();
 #ifdef HAS_PMU
   AXP192_showstatus();
+#endif
+#ifdef HAS_IP5306
+  printIP5306Stats();
 #endif
 #endif
 
@@ -116,6 +118,16 @@ void doHousekeeping() {
   }
 #endif
 
+#if (HAS_SDS011)
+  if (isSDS011Active) {
+    ESP_LOGD(TAG, "SDS011: go to sleep");
+    sds011_loop();
+  } else {
+    ESP_LOGD(TAG, "SDS011: wakeup");
+    sds011_wakeup();
+  }
+#endif
+
 } // doHousekeeping()
 
 // uptime counter 64bit to prevent millis() rollover after 49 days
@@ -143,7 +155,7 @@ void reset_counters() {
   macs_wifi = 0;
   macs_ble = 0;
 #ifdef HAS_DISPLAY
-  oledPlotCurve(0, true);
+  dp_plotCurve(0, true);
 #endif
 
 #endif

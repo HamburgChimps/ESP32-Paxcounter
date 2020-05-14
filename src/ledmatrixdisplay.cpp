@@ -1,6 +1,7 @@
 #ifdef HAS_MATRIX_DISPLAY
 
 #include "globals.h"
+#include "ledmatrixdisplay.h"
 
 #define MATRIX_DISPLAY_PAGES (2) // number of display pages
 #define LINE_DIAGRAM_DIVIDER (2) // scales pax numbers to led rows
@@ -39,7 +40,7 @@ void init_matrix_display(bool reverse) {
     matrix.reverse();
   matrix.clear();
   matrix.drawPoint(0, LED_MATRIX_HEIGHT - 1, 1);
-} // init_display
+} // dp_init
 
 void refreshTheMatrixDisplay(bool nextPage) {
   static uint8_t DisplayPage = 0, col = 0, row = 0;
@@ -205,7 +206,7 @@ uint8_t GetCharWidth(char cChar) {
 }
 
 void ScrollMatrixLeft(uint8_t *buf, const uint16_t cols, const uint16_t rows) {
-  uint32_t i, k, idx;
+  uint32_t i, k, idx = 0;
   const uint32_t x = cols / 8;
 
   for (k = 0; k < rows; k++) {

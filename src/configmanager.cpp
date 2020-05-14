@@ -1,6 +1,7 @@
 /* configmanager persists runtime configuration using NVRAM of ESP32*/
 
 #include "globals.h"
+#include "configmanager.h"
 
 // Local logging tag
 static const char TAG[] = "flash";
@@ -11,7 +12,7 @@ esp_err_t err;
 #define PAYLOADMASK                                  \
   ((GPS_DATA | ALARM_DATA | MEMS_DATA | COUNT_DATA | \
     SENSOR1_DATA | SENSOR2_DATA | IBIS_DATA ) &    \
-   (~BATT_DATA) )
+   (BATT_DATA) )
 
 // populate cfg vars with factory settings
 void defaultConfig() {

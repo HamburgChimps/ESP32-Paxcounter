@@ -80,7 +80,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#if(HAS_GPS)
+#if (HAS_GPS)
   buffer[cursor++] = (byte)((value.latitude & 0xFF000000) >> 24);
   buffer[cursor++] = (byte)((value.latitude & 0x00FF0000) >> 16);
   buffer[cursor++] = (byte)((value.latitude & 0x0000FF00) >> 8);
@@ -109,7 +109,7 @@ void PayloadConvert::addIBIS(ibisStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
   uint8_t length = buf[0];
   memcpy(buffer, buf + 1, length);
   cursor += length; // length of buffer
@@ -117,7 +117,7 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#if(HAS_BME)
+#if (HAS_BME)
   int16_t temperature = (int16_t)(value.temperature); // float -> int
   uint16_t humidity = (uint16_t)(value.humidity);     // float -> int
   uint16_t pressure = (uint16_t)(value.pressure);     // float -> int
@@ -131,6 +131,16 @@ void PayloadConvert::addBME(bmeStatus_t value) {
   buffer[cursor++] = highByte(iaq);
   buffer[cursor++] = lowByte(iaq);
 #endif
+}
+
+void PayloadConvert::addSDS(sdsStatus_t sds) {
+#if (HAS_SDS011)
+  char tempBuffer[10 + 1];
+  sprintf(tempBuffer, ",%5.1f", sds.pm10);
+  addChars(tempBuffer, strlen(tempBuffer));
+  sprintf(tempBuffer, ",%5.1f", sds.pm25);
+  addChars(tempBuffer, strlen(tempBuffer));
+#endif // HAS_SDS011
 }
 
 void PayloadConvert::addButton(uint8_t value) {
@@ -202,7 +212,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float cputemp,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#if(HAS_GPS)
+#if (HAS_GPS)
   writeLatLng(value.latitude, value.longitude);
 #if (!PAYLOAD_OPENSENSEBOX)
   writeUint8(value.satellites);
@@ -223,7 +233,7 @@ void PayloadConvert::addIBIS(ibisStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#if(HAS_SENSORS)
+#if (HAS_SENSORS)
   uint8_t length = buf[0];
   memcpy(buffer, buf + 1, length);
   cursor += length; // length of buffer
@@ -231,12 +241,19 @@ void PayloadConvert::addSensor(uint8_t buf[]) {
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#if(HAS_BME)
+#if (HAS_BME)
   writeFloat(value.temperature);
   writePressure(value.pressure);
   writeUFloat(value.humidity);
   writeUFloat(value.iaq);
 #endif
+}
+
+void PayloadConvert::addSDS(sdsStatus_t sds) {
+#if (HAS_SDS011)
+  writeUint16((uint16_t)(sds.pm10 * 10));
+  writeUint16((uint16_t)(sds.pm25 * 10));
+#endif // HAS_SDS011
 }
 
 void PayloadConvert::addButton(uint8_t value) {
@@ -261,9 +278,7 @@ void PayloadConvert::uintToBytes(uint64_t value, uint8_t byteSize) {
   }
 }
 
-void PayloadConvert::writeUptime(uint64_t uptime) {
-  writeUint64(uptime);
-}
+void PayloadConvert::writeUptime(uint64_t uptime) { writeUint64(uptime); }
 
 void PayloadConvert::writeVersion(char *version) {
   memcpy(buffer + cursor, version, 10);
@@ -284,13 +299,9 @@ void PayloadConvert::writeUint16(uint16_t i) { uintToBytes(i, 2); }
 
 void PayloadConvert::writeUint8(uint8_t i) { uintToBytes(i, 1); }
 
-void PayloadConvert::writeUFloat(float value) {
-  writeUint16(value * 100);
-}
+void PayloadConvert::writeUFloat(float value) { writeUint16(value * 100); }
 
-void PayloadConvert::writePressure(float value) {
-  writeUint16(value * 10);
-}
+void PayloadConvert::writePressure(float value) { writeUint16(value * 10); }
 
 /**
  * Uses a 16bit two's complement with two decimals, so the range is
@@ -331,10 +342,32 @@ void PayloadConvert::writeBitmap(bool a, bool b, bool c, bool d, bool e, bool f,
 
 #elif ((PAYLOAD_ENCODER == 3) || (PAYLOAD_ENCODER == 4))
 
-void PayloadConvert::addByte(uint8_t value) { 
-  /* 
+void PayloadConvert::addByte(uint8_t value) {
+  /*
   not implemented
-  */ }
+  */
+}
+
+void PayloadConvert::addSDS(sdsStatus_t sds) {
+#if (HAS_SDS011)
+// value of PM10
+#if (PAYLOAD_ENCODER == 3) // Cayenne LPP dynamic
+  buffer[cursor++] = LPP_PARTMATTER10_CHANNEL; // for PM10
+#endif
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+  buffer[cursor++] = highByte((uint16_t)(sds.pm10 * 10));
+  buffer[cursor++] = lowByte((uint16_t)(sds.pm10 * 10));
+// value of PM2.5
+#if (PAYLOAD_ENCODER == 3) // Cayenne LPP dynamic
+  buffer[cursor++] = LPP_PARTMATTER25_CHANNEL; // for PM2.5
+#endif
+  buffer[cursor++] =
+      LPP_LUMINOSITY; // workaround since cayenne has no data type meter
+  buffer[cursor++] = highByte((uint16_t)(sds.pm25 * 10));
+  buffer[cursor++] = lowByte((uint16_t)(sds.pm25 * 10));
+#endif // HAS_SDS011
+}
 
 void PayloadConvert::addCount(uint16_t value, uint8_t snifftype) {
   switch (snifftype) {
@@ -412,7 +445,7 @@ void PayloadConvert::addStatus(uint16_t voltage, uint64_t uptime, float celsius,
 }
 
 void PayloadConvert::addGPS(gpsStatus_t value) {
-#if(HAS_GPS)
+#if (HAS_GPS)
   int32_t lat = value.latitude / 100;
   int32_t lon = value.longitude / 100;
   int32_t alt = value.altitude * 100;
@@ -433,18 +466,18 @@ void PayloadConvert::addGPS(gpsStatus_t value) {
 }
 
 void PayloadConvert::addSensor(uint8_t buf[]) {
-#if(HAS_SENSORS)
-// to come
-/*
-  uint8_t length = buf[0];
-  memcpy(buffer, buf+1, length);
-  cursor += length; // length of buffer
-*/
+#if (HAS_SENSORS)
+  // to come
+  /*
+    uint8_t length = buf[0];
+    memcpy(buffer, buf+1, length);
+    cursor += length; // length of buffer
+  */
 #endif // HAS_SENSORS
 }
 
 void PayloadConvert::addBME(bmeStatus_t value) {
-#if(HAS_BME)
+#if (HAS_BME)
 
   // data value conversions to meet cayenne data type definition
   // 0.1°C per bit => -3276,7 .. +3276,7 °C
@@ -508,5 +541,9 @@ void PayloadConvert::addTime(time_t value) {
   buffer[cursor++] = (byte)((tx_period & 0x000000FF));
 #endif
 }
+#endif // PAYLOAD_ENCODER
 
-#endif
+void PayloadConvert::addChars(char *string, int len) {
+  for (int i = 0; i < len; i++)
+    addByte(string[i]);
+}
