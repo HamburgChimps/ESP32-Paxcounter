@@ -19,8 +19,9 @@
 #include "timekeeper.h"
 #include "bmesensor.h"
 #include "power.h"
+#ifdef HAS_MATRIX_DISPLAY
 #include "ledmatrixdisplay.h"
-
+#endif
 void irqHandler(void *pvParameters);
 void mask_user_IRQ();
 void unmask_user_IRQ();

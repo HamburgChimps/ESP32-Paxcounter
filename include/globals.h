@@ -143,7 +143,10 @@ extern Timezone myTZ;
 extern RTC_DATA_ATTR runmode_t RTC_runmode;
 
 // application includes
+#if (HAS_LED != NOT_A_PIN)
 #include "led.h"
+#endif
+
 #include "payload.h"
 #include "blescan.h"
 #include "power.h"

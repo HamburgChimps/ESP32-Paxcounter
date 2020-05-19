@@ -4,8 +4,12 @@
 #ifdef USE_OTA
 
 #include "globals.h"
+#if (HAS_LED != NOT_A_PIN)
 #include "led.h"
+#endif
+#ifdef HAS_DISPLAY
 #include "display.h"
+#endif
 
 #include <Update.h>
 #include <WiFi.h>

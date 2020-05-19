@@ -6,7 +6,10 @@
 
 #include "i2c.h"
 #include "lorawan.h"
+#ifdef HAS_DISPLAY
 #include "display.h"
+#endif
+
 #include "power.h"
 
 void do_reset(bool warmstart);

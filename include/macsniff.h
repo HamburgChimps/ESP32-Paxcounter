@@ -8,7 +8,9 @@
 #include "hash.h"
 #include "senddata.h"
 #include "cyclic.h"
+#if (HAS_LED != NOT_A_PIN )
 #include "led.h"
+#endif
 
 #define MAC_SNIFF_WIFI 0
 #define MAC_SNIFF_BLE 1

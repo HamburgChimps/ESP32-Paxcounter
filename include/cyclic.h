@@ -6,7 +6,11 @@
 #include "rcommand.h"
 #include "spislave.h"
 #include "bmesensor.h"
+
+#ifdef HAS_DISPLAY
 #include "display.h"
+#endif
+
 #include "sds011read.h"
 #include "sdcard.h"
 

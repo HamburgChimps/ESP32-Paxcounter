@@ -5,7 +5,9 @@
 #include "cyclic.h"
 #include "sensor.h"
 #include "lorawan.h"
+#ifdef HAS_DISPLAY
 #include "display.h"
+#endif
 #include "sdcard.h"
 
 extern Ticker sendcycler;

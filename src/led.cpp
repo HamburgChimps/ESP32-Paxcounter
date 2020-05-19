@@ -1,3 +1,5 @@
+#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
+
 // Basic Config
 #include "globals.h"
 #include "led.h"
@@ -138,7 +140,6 @@ void blink_LED(uint16_t set_color, uint16_t set_blinkduration) {
 #endif
 }
 
-#if (HAS_LED != NOT_A_PIN) || defined(HAS_RGB_LED)
 
 void ledLoop(void *parameter) {
   while (1) {
