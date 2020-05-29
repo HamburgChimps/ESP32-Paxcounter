@@ -17,9 +17,9 @@ namespace TinyIBIS {
     enum class t_telegram {
         UKNOWN,
         DS001,
-        DS003,
+        // DS003,
         DS036,
-        DS010E
+        // DS010E
     };
 
     typedef ctre::regex_results<const char *, ctre::captured_content<1U>> t_sResult;
@@ -46,20 +46,20 @@ namespace TinyIBIS {
     };
 
 
-    class DS003Telegram : public CommonTelegram {
-      public:
-        uint16_t value = 0;
-    };
+    // class DS003Telegram : public CommonTelegram {
+    //   public:
+    //     uint16_t value = 0;
+    // };
 
     class DS036Telegram : public CommonTelegram {
       public:
         uint16_t value = 0;
     };
 
-    class DS010ETelegram : public CommonTelegram {
-      public:
-        int16_t value = 0;
-    };
+    // class DS010ETelegram : public CommonTelegram {
+    //   public:
+    //     int16_t value = 0;
+    // };
 
     class Ibis {
       private:
@@ -70,18 +70,18 @@ namespace TinyIBIS {
         uint8_t curTermOffset = 0;
         char buffer[IBIS_MAX_FIELD_SIZE] = {0};
         void ParseDS001(t_sResult m) noexcept;
-        void ParseDS003(t_sResult m) noexcept;
+        // void ParseDS003(t_sResult m) noexcept;
         void ParseDS036(t_sResult m) noexcept;
-        void ParseDS010E(t_sResult m) noexcept;
+        // void ParseDS010E(t_sResult m) noexcept;
         void reset();
       public:
         Ibis();
         t_telegram encode(char c);
         time_t updatedAt = now();
         DS001Telegram DS001 = DS001Telegram();
-        DS003Telegram DS003 = DS003Telegram();
+        // DS003Telegram DS003 = DS003Telegram();
         DS036Telegram DS036 = DS036Telegram();
-        DS010ETelegram DS010E = DS010ETelegram();
+        // DS010ETelegram DS010E = DS010ETelegram();
     };
 
 

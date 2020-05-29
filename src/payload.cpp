@@ -103,8 +103,8 @@ void PayloadConvert::addIBIS(ibisStatus_t value) {
 #if HAS_IBIS
   writeUint16(value.DS001);
   writeUint16(value.DS003);
-  buffer[cursor++] = highByte(value.DS010E);
-  buffer[cursor++] = lowByte(value.DS010E);
+  // buffer[cursor++] = highByte(value.DS010E);
+  // buffer[cursor++] = lowByte(value.DS010E);
 #endif
 }
 

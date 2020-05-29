@@ -93,7 +93,7 @@ function Decode(fport, bytes) {
     }
 
     if (fport === 12) {
-        return decode(bytes, [uint16, uint16, uint16, int16], [line, destination, nextStop, delay])
+        return decode(bytes, [uint16, uint16], [line, nextStop])
     }
 
 }
